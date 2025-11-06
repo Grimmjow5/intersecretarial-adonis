@@ -1,10 +1,8 @@
 import mongoose, { Document, Schema } from "mongoose";
 import timeNowPosh from "#utils/timeNowPosh";
+import { StatusModel } from "../dtos/status.js";
 
-export enum StatusUser {
-    Active = "active",
-    Inactive = "inactive",
-}
+
 
 export type Permisos = {
     administrator: boolean;
@@ -45,7 +43,7 @@ export interface IUser extends Document {
     email: string;
     phone: string;
     permissions: Partial<Permisos>;
-    status: StatusUser;
+    status: StatusModel;
     createdAt: number;
     updatedAt: number;
 }
@@ -64,8 +62,8 @@ const UserSchema = new Schema<IUser>({
     phone: { type: String },
     status: {
         type: String,
-        enum: Object.values(StatusUser),
-        default: StatusUser.Active,
+        enum: Object.values(StatusModel),
+        default: StatusModel.Active,
     },
     permissions: {
         administrator: { type: Boolean, default: false },

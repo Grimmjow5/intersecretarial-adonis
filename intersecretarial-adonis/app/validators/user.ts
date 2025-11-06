@@ -13,7 +13,7 @@ const createUserValidator = vine.object({
   degree: vine.string(),
   email: vine.string().email(),
   phone: vine.string(),
-  status: vine.enum(['active', 'inactive']), // ajusta según tus estados
+  status: vine.enum(['active', 'inactive']).optional(), // ajusta según tus estados
 
   permissions: vine.object({
    // administrador: vine.boolean(),

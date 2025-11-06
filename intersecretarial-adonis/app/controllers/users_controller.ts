@@ -1,36 +1,56 @@
 import { UserService } from "#services/user_service";
 import { inject } from "@adonisjs/core";
-import type { HttpContext } from "@adonisjs/core/http";
-import createUserValidador from "#validators/user";
 import { IUser } from "#models/user";
-import validateAdmin from "#validators/usersadmin";
-import mongoose, { MongooseError } from "mongoose";
-import { json } from "stream/consumers";
+import { FactoryController } from "./factory_controller.js";
+import type { HttpContext } from "@adonisjs/core/http";
+import { StatusModel } from "#dtos/status";
+import validateAdmin from "#validators/usersadmin"
 
 @inject()
-export default class UsersController {
-    constructor(private readonly serviceUser: UserService) {}
+export default class UsersController extends FactoryController<IUser> {
+    constructor(private control: UserService) {
+        super(control);
+    }
 
-    public async createUser({ request, response }: HttpContext) {
+    public async restoreUser({ response, request }: HttpContext) {
         try {
-            const userValidado = await request.validateUsing(
-                createUserValidador,
-            );
-            const userInsert = userValidado as Partial<IUser>;
-            const newUser = await this.serviceUser.createUser(userInsert);
-            const { code, ...res } = newUser;
-            return response.status(code).json(res);
+            const id = request.param("id");
+            const restore = await this.control.updateStatus({
+                id,
+                status: StatusModel.Active,
+            });
+            const { code, ...todo } = restore;
+            return response.status(code).json(todo);
         } catch (error) {
-            return response.status(500).json({
+            return response.status(error.code).json({
                 success: false,
                 message: error.message,
             });
         }
     }
+
+    public async inactiveUser({ response, request }: HttpContext) {
+        try {
+            const id = request.param("id");
+            const restore = await this.control.updateStatus({
+                id,
+                status: StatusModel.Inactive,
+            });
+            const { code, ...todo } = restore;
+            return response.status(code).json(todo);
+        } catch (error) {
+            return response.status(error.code).json({
+                success: false,
+                message: error.message,
+            });
+        }
+    }
+
+    
     public async createUserAdmin({ response, request }: HttpContext) {
         try {
             const admin = await request.validateUsing(validateAdmin);
-            let adminNew = await this.serviceUser.createUser({
+            let adminNew = await this.control.create({
                 ...admin,
                 permissions: { administrator: true },
             });
@@ -42,18 +62,6 @@ export default class UsersController {
                 success: 500,
                 message: error.message,
             });
-        }
-    }
-    
-    public async updateUser({request,response}:HttpContext){
-        try {
-            const user = await request.validateUsing(createUserValidador);
-            const userDecode = user as Partial<IUser>;
-            const updateUser = await this.serviceUser.updateUser(userDecode);
-            const {code,...userUpdate} = updateUser;
-            return response.status(code).json(userUpdate);
-        } catch (error) {
-            return response.status(error.code).json({success:false,message:error.message});
         }
     }
 }
